@@ -13,8 +13,8 @@ from __future__ import division
 from numba import jit,njit,prange,objmode
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.ndimage.filters import gaussian_filter
-from scipy.ndimage.filters import convolve as filter2
+from scipy.ndimage import gaussian_filter
+from scipy.ndimage import convolve as filter2
 import scipy.signal as sgn
 from scipy.linalg import norm
 from scipy import signal
