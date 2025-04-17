@@ -55,11 +55,12 @@ import PIL
 from PIL import Image
 import pyopencl as cl
 import pyopencl.array as cl_array
+# Commented out for benchmark
 #from IPython.core import debugger
 #debug = debugger.Pdb().set_trace
 
 def imresize(im, res):
-    return np.array(Image.fromarray(im).resize(res, PIL.Image.BILINEAR)) #PIL.Image.LANCZOS, PIL.Image.BICUBIC 
+    return np.array(Image.fromarray(im).resize(res, PIL.Image.BILINEAR)) #PIL.Image.LANCZOS, PIL.Image.BICUBIC
 
 class Farneback_PyCL(object):
     """
@@ -68,7 +69,7 @@ class Farneback_PyCL(object):
     """
     def __init__(self, windowSize=33, Niters=5, polyN=7, polySigma=1.5, useGaussian=True, pyrScale=0.5, pyramidalLevels=1, platformID=0, deviceID=0, \
                        provideGenericPyramidalDefaults=True):
-        assert(pyramidalLevels >= 1, 'Pyramidal levels must be greater or equal than 1')
+        assert pyramidalLevels >= 1, 'Pyramidal levels must be greater or equal than 1'
         self.useDouble = False    #Gains are so marginal that it doesn't justify performance impact
         self.windowSize = windowSize
         self.numIters = Niters
@@ -78,9 +79,9 @@ class Farneback_PyCL(object):
         self.pyramidalLevels = pyramidalLevels-1
         self.fastPyramids = False #Currently unimplemented, so always false
         self.pyrScale = pyrScale
-        
+
         self.provideGenericPyramidalDefaults=provideGenericPyramidalDefaults
-        
+
         self.kernelGaussianBlur = None
         self.kernelGaussianBlur5 = None
         self.kernelBoxFilter5 = None
@@ -88,7 +89,7 @@ class Farneback_PyCL(object):
         self.kernelPolyExpansion = None
         self.kernelUpdateFlow = None
         self.kernelUpdateMatrices = None
-        
+
         self.scriptDir = os.path.dirname(os.path.realpath(__file__))
 
         if windowSize & 1 == 0:
@@ -97,7 +98,7 @@ class Farneback_PyCL(object):
         dev = cl.get_platforms()[platformID].get_devices()[deviceID]
         ctx = cl.Context([dev])
         print('Runnning on device: ' + str(dev))
-        
+
         #Compile kernels
         clSrc=None
         with open(self.scriptDir + os.path.sep + 'optical_flow_farneback.cl', 'r') as file:
@@ -122,15 +123,15 @@ class Farneback_PyCL(object):
 
     def FarnebackPrepareGaussian(self):
         n = self.polyN
-        sigma = self.polySigma 
-        
+        sigma = self.polySigma
+
         if sigma < 1.19209289550781250000000000000000000e-7:
             sigma = n*0.3;
-            
+
         g = np.zeros([2*n+1], dtype=np.float32)
         xg = np.zeros([2*n+1], dtype=np.float32)
         xxg = np.zeros([2*n+1], dtype=np.float32)
-        
+
         s = np.float64(0.0)
         for x in range(-n, n+1):
             g[x + n] = np.exp(-x*x/(2*sigma*sigma));
@@ -171,7 +172,7 @@ class Farneback_PyCL(object):
         return g, xg, xxg, ig11, ig03, ig33, ig55
 
     def setPolynomialExpansionConsts(self):
-        n = self.polyN 
+        n = self.polyN
         m_igd = np.zeros(4, dtype=np.float64)
         m_ig = np.zeros(4, dtype=np.float32)
         g, xg, xxg, m_igd[0], m_igd[1], m_igd[2], m_igd[3] = self.FarnebackPrepareGaussian();
@@ -179,7 +180,7 @@ class Farneback_PyCL(object):
         t_g = g[n:].reshape([1, n+1]);
         t_xg = xg[n:].reshape([1, n+1]);
         t_xxg = xxg[n:].reshape([1, n+1]);
-        
+
         m_g = t_g.copy();
         m_xg = t_xg.copy();
         m_xxg = t_xxg.copy();
@@ -188,7 +189,7 @@ class Farneback_PyCL(object):
         m_ig[1] = np.float32(m_igd[1]);
         m_ig[2] = np.float32(m_igd[2]);
         m_ig[3] = np.float32(m_igd[3]);
-        
+
         self.matrixG = m_g;
         self.matrixXG = m_xg;
         self.matrixXXG = m_xxg;
@@ -225,14 +226,14 @@ class Farneback_PyCL(object):
         srcCl = cl.Buffer(self.ctx, mf.READ_ONLY  | mf.COPY_HOST_PTR, hostbuf=src)
         gaussianMatKernelCl = cl.Buffer(self.ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.matrixGKernel)
         dstCl = cl.Buffer(self.ctx, mf.WRITE_ONLY | mf.ALLOC_HOST_PTR | mf.COPY_HOST_PTR, hostbuf=dst)
-        
+
         queue = cl.CommandQueue(self.ctx)
-        self.kernelGaussianBlur(queue, globalSize, workGroupSize, 
-                           srcCl, cl.cltypes.int(srcCols*numChannels), dstCl, cl.cltypes.int(dstCols*numChannels), 
+        self.kernelGaussianBlur(queue, globalSize, workGroupSize,
+                           srcCl, cl.cltypes.int(srcCols*numChannels), dstCl, cl.cltypes.int(dstCols*numChannels),
                            dstRows, dstCols, gaussianMatKernelCl, cl.cltypes.int(kSizeHalf), cl.LocalMemory(smemSize))
 
         cl.enqueue_copy(queue, dst, dstCl)
-        
+
         if dst is None:
             raise Exception('Failed to compute gaussianBlur')
 
@@ -257,10 +258,10 @@ class Farneback_PyCL(object):
         srcCl = cl.Buffer(self.ctx, mf.READ_ONLY  | mf.COPY_HOST_PTR, hostbuf=src)
         gaussianMatKernelCl = cl.Buffer(self.ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.matrixGKernel)
         dstCl = cl.Buffer(self.ctx, mf.WRITE_ONLY | mf.ALLOC_HOST_PTR | mf.COPY_HOST_PTR, hostbuf=dst)
-        
+
         queue = cl.CommandQueue(self.ctx)
-        self.kernelGaussianBlur5(queue, globalSize, workGroupSize, 
-                           srcCl, srcCols*numChannels, dstCl, dstCols*numChannels, 
+        self.kernelGaussianBlur5(queue, globalSize, workGroupSize,
+                           srcCl, srcCols*numChannels, dstCl, dstCols*numChannels,
                            cl.cltypes.int(height), srcCols, gaussianMatKernelCl, cl.cltypes.int(kSizeHalf), cl.LocalMemory(smemSize))
 
         cl.enqueue_copy(queue, dst, dstCl)
@@ -290,22 +291,22 @@ class Farneback_PyCL(object):
         #Step1 is the size of an element in bytes
         #step1  = np.dtype(np.float32).itemsize
         #flowx.step / flowx.elemSize() is just then number of columns * number of channels
-        
+
         mf = cl.mem_flags
         srcCl = cl.Buffer(self.ctx, mf.READ_ONLY  | mf.COPY_HOST_PTR, hostbuf=src)
         dstCl = cl.Buffer(self.ctx, mf.WRITE_ONLY  | mf.ALLOC_HOST_PTR | mf.COPY_HOST_PTR, hostbuf=dst)
 
         queue = cl.CommandQueue(self.ctx)
-        self.kernelBoxFilter5(queue, globalSize, workGroupSize, 
+        self.kernelBoxFilter5(queue, globalSize, workGroupSize,
                               srcCl, srcCols*numChannels, dstCl, dstCols*numChannels,
                               cl.cltypes.int(height), srcCols, cl.cltypes.int(kSizeHalf), cl.LocalMemory(smemSize))
 
         cl.enqueue_copy(queue, dst, dstCl)
-        
+
         if dst is None:
             raise Exception('Failed to compute boxFilter5')
 
-        return dst        
+        return dst
 
     def polynomialExpansion(self, src, dst):
         #Matrices must be in row order
@@ -344,7 +345,7 @@ class Farneback_PyCL(object):
 
         queue = cl.CommandQueue(self.ctx)
         self.kernelPolyExpansion(queue, globalSize, workGroupSize,
-                                 srcCl, srcCols * numChannels, dstCl, dstCols * numChannels, 
+                                 srcCl, srcCols * numChannels, dstCl, dstCols * numChannels,
                                  srcRows, srcCols, gCl, xgCl, xxgCl, cl.LocalMemory(smemSize), igCl)
 
         cl.enqueue_copy(queue, dst, dstCl)
@@ -372,8 +373,8 @@ class Farneback_PyCL(object):
         flowYCl = cl.Buffer(self.ctx, mf.WRITE_ONLY  | mf.ALLOC_HOST_PTR | mf.COPY_HOST_PTR, hostbuf=flowY)
 
         queue = cl.CommandQueue(self.ctx)
-        self.kernelUpdateFlow(queue, globalSize, workGroup, 
-                              MCl, cl.cltypes.int(M.shape[1]*numChannels), 
+        self.kernelUpdateFlow(queue, globalSize, workGroup,
+                              MCl, cl.cltypes.int(M.shape[1]*numChannels),
                               flowXCl, flowXCols*numChannels, flowYCl, flowYCols*numChannels,
                               flowYRows, flowYCols)
 
@@ -399,7 +400,7 @@ class Farneback_PyCL(object):
         numChannels = cl.cltypes.int(1)
         workGroup   = (32, 8)
         globalSize  = (flowXCols, flowXRows)
-        
+
         mf = cl.mem_flags
         flowXCl = cl.Buffer(self.ctx, mf.READ_ONLY  | mf.COPY_HOST_PTR, hostbuf=flowX)
         flowYCl = cl.Buffer(self.ctx, mf.READ_ONLY  | mf.COPY_HOST_PTR, hostbuf=flowY)
@@ -408,12 +409,12 @@ class Farneback_PyCL(object):
         MCl     = cl.Buffer(self.ctx, mf.WRITE_ONLY | mf.COPY_HOST_PTR, hostbuf=M)
 
         queue = cl.CommandQueue(self.ctx)
-        self.kernelUpdateMatrices(queue, globalSize, workGroup, 
+        self.kernelUpdateMatrices(queue, globalSize, workGroup,
                                   flowXCl, flowXCols * numChannels, flowYCl, flowYCols*numChannels,
-                                  flowXRows, flowXCols, 
-                                  RACl, cl.cltypes.int(RA.shape[1]*numChannels), 
+                                  flowXRows, flowXCols,
+                                  RACl, cl.cltypes.int(RA.shape[1]*numChannels),
                                   RBCl, cl.cltypes.int(RB.shape[1]*numChannels), MCl, MCols*numChannels)
-                                               
+
         cl.enqueue_copy(queue, M, MCl)
 
         if M is None:
@@ -435,7 +436,7 @@ class Farneback_PyCL(object):
             raise Exception('Failed to updateFlow in updateFlowBoxFilter', e)
         if updateMatrices:
             M = self.updateMatrices(flowX, flowY, RA, RB, M)
-            
+
         return flowX, flowY, M, bufM
 
     def updateFlowGaussianBlur(self, RA, RB, flowX, flowY, M, bufM, blockSize, updateMatrices):
@@ -443,7 +444,7 @@ class Farneback_PyCL(object):
             bufM = self.gaussianBlur5(M, blockSize/2, bufM)
         except Exception as e:
             raise Exception('Failed to compute gaussianBlur5 in updateFlowGaussianBlur', e)
-            
+
         #swap(M, bufM)
         M, bufM = bufM, M
         try:
@@ -459,7 +460,7 @@ class Farneback_PyCL(object):
         raise Exception('Fast Pyramids not supported yet... Check ocl_pyrDown and ocl_pyrUp, pyrDown, pyrUp in OpenCV')
 
     def compute(self, im1, im2, U, V):
-        assert(self.polyN == 5 or self.polyN == 7) 
+        assert(self.polyN == 5 or self.polyN == 7)
         assert(im1.shape == im2.shape and self.pyrScale < 1)
         assert(U.shape == im1.shape and V.shape == im1.shape)
         assert(not self.fastPyramids or abs(self.pyrScale - 0.5) < 1e-6)
@@ -471,14 +472,14 @@ class Farneback_PyCL(object):
         prevFlowY=None
         curFlowX=None
         curFlowY=None
-        
+
         flowX0 = U
         flowY0 = V
 
         #Crop unnecessary pyramidal levels
         scale = 1;
         finalNumLevels = 0;
-        while finalNumLevels < self.pyramidalLevels:         
+        while finalNumLevels < self.pyramidalLevels:
             scale *= self.pyrScale;
             if (size[1]*scale < min_size or size[0]*scale < min_size):
                 break;
@@ -492,7 +493,7 @@ class Farneback_PyCL(object):
             pyramid1 = []
             pyramid0.append(im1);
             pyramid1.append(im2);
-            
+
             i = 1
             curPyramid0 = pyramid0[0]
             curPyramid1 = pyramid1[0]
@@ -508,39 +509,39 @@ class Farneback_PyCL(object):
             scale = 1.0
             for i in np.arange(0, k):
                 scale *= self.pyrScale
-        
+
             sigma = (1.0/scale - 1.0) * 0.5
             smoothSize = int(round(sigma*5)) | 1
             smoothSize = max(smoothSize, 3)
-        
+
             width  = int(round(size[1] * scale))
             height = int(round(size[0] * scale))
-         
-            if self.fastPyramids:            
+
+            if self.fastPyramids:
                 width = pyramid0[k].shape[1];
                 height = pyramid0[k].shape[0];
-        
+
             #if (k > 0):
             #    curFlowX = np.zeros([height, width], dtype=np.float32)
-            #    curFlowY = np.zeros([height, width], dtype=np.float32)                
+            #    curFlowY = np.zeros([height, width], dtype=np.float32)
             #else:
             #    curFlowX = flowX0;
             #    curFlowY = flowY0;
-        
+
             if prevFlowX is None:
                 curFlowX = imresize(flowX0, (width, height))
-                curFlowY = imresize(flowY0, (width, height))                
+                curFlowY = imresize(flowY0, (width, height))
                 curFlowX *= scale
                 curFlowY *= scale
             else:
                 curFlowX = imresize(prevFlowX, (width, height))
-                curFlowY = imresize(prevFlowY, (width, height))                
+                curFlowY = imresize(prevFlowY, (width, height))
                 curFlowX *= 1.0/self.pyrScale
                 curFlowY *= 1.0/self.pyrScale
 
-            M    = np.zeros((5*height, width), np.float32); 
+            M    = np.zeros((5*height, width), np.float32);
             bufM = np.zeros((5*height, width), np.float32);
-            RA   = np.zeros((5*height, width), np.float32); 
+            RA   = np.zeros((5*height, width), np.float32);
             RB   = np.zeros((5*height, width), np.float32);
 
             if self.fastPyramids:
@@ -554,10 +555,10 @@ class Farneback_PyCL(object):
                     raise Exception('Failed to do polynomial expansion for RB', e)
             else:
                 blurredFrameA = np.zeros([size[0], size[1]], dtype=np.float32)
-                blurredFrameB = np.zeros([size[0], size[1]], dtype=np.float32)                
+                blurredFrameB = np.zeros([size[0], size[1]], dtype=np.float32)
 
                 pyrLevelA = np.zeros([height, width], dtype=np.float32)
-                pyrLevelB = np.zeros([height, width], dtype=np.float32)                
+                pyrLevelB = np.zeros([height, width], dtype=np.float32)
 
                 self.setGaussianBlurKernel(smoothSize, sigma);
 
@@ -567,7 +568,7 @@ class Farneback_PyCL(object):
                 except Exception as e:
                     raise Exception('Failed to do gaussian Blur for frame A, level ' + str(i), e)
                 pyrLevelA = imresize(blurredFrameA, (width, height))
-                try:                
+                try:
                     RA = self.polynomialExpansion(pyrLevelA, RA)
                 except Exception as e:
                     raise Exception('Failed to do polynomial expansion for frame A, level ' + str(i), e)
@@ -578,17 +579,17 @@ class Farneback_PyCL(object):
                 except Exception as e:
                     raise Exception('Failed to do gaussian Blur for frame B, level ' + str(i), e)
                 pyrLevelB = imresize(blurredFrameB, (width, height))
-                try:                
+                try:
                     RB = self.polynomialExpansion(pyrLevelB, RB)
                 except Exception as e:
                     raise Exception('Failed to do polynomial expansion for frame A, level ' + str(i), e)
-            
-            M = self.updateMatrices(curFlowX, curFlowY, RA, RB, M)           
+
+            M = self.updateMatrices(curFlowX, curFlowY, RA, RB, M)
 
             if self.useGaussianFilter:
                 self.setGaussianBlurKernel(self.windowSize, self.windowSize/2*0.3)
             for  i in np.arange(0, self.numIters):
-                if self.useGaussianFilter:                    
+                if self.useGaussianFilter:
                     curFlowX, curFlowY, M, bufM = self.updateFlowGaussianBlur(RA, RB, curFlowX, curFlowY, M, bufM, self.windowSize, i < self.numIters-1)
                 else:
                     curFlowX, curFlowY, M, bufM = self.updateFlowBoxFilter(RA, RB, curFlowX, curFlowY, M, bufM, self.windowSize, i < self.numIters-1)
@@ -607,9 +608,9 @@ class Farneback_PyCL(object):
 
     def hasGenericPyramidalDefaults(self):
         return self.provideGenericPyramidalDefaults
-        
+
     def getGenericPyramidalDefaults(self):
         parameters = {}
         parameters['warping'] = False
         parameters['scaling'] = True
-        return parameters    
+        return parameters

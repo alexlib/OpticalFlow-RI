@@ -18,6 +18,7 @@ from scipy.ndimage import convolve as filter2
 import scipy.signal as sgn
 from scipy.linalg import norm
 from scipy import signal
+# Commented out for benchmark
 #from IPython.core import debugger
 #debug = debugger.Pdb().set_trace
 #
@@ -37,22 +38,22 @@ class HSOpticalFlowAlgoAdapter(object):
 
     def getAlgoName(self):
         return 'Horn-Schunck'
-        
+
     def hasGenericPyramidalDefaults(self):
         return self.provideGenericPyramidalDefaults
-        
+
     def getGenericPyramidalDefaults(self):
         parameters = {}
-        parameters['warping'] = True    
+        parameters['warping'] = True
         parameters['biLinear'] = True
         parameters['scaling'] = True
-        return parameters        
+        return parameters
 
 @jit('Tuple((float32[:,:],float32[:,:]))(float32,float32[:,:],float32[:,:],float32[:,:],float32[:,:],float32[:,:])', nopython=True, parallel=False)
 def HS_helper2(alpha, fx, fy, ft, uAvg, vAvg):
-    #%% common part of update step       
+    #%% common part of update step
     der = (fx*uAvg + fy*vAvg + ft) / (alpha**2 + fx**2 + fy**2)
-    #%% iterative step	
+    #%% iterative step
     Unew = uAvg - fx * der
     Vnew = vAvg - fy * der
     return Unew, Vnew
@@ -65,7 +66,7 @@ def HS_helper(alpha, Niter, kernel, U, V, fx, fy, ft):
         uAvg = filter2(U,kernel, mode='mirror') #uBar in the paper
         #with objmode(vAvg='float32[:,:]'):
         vAvg = filter2(V,kernel, mode='mirror') #vBar in the paper
-        
+
         U, V = HS_helper2(alpha, fx, fy, ft, uAvg, vAvg)
     return U, V
 
@@ -97,7 +98,7 @@ def HS(im2, im1, alpha, Niter, U, V):
 
     Unew, Vnew = HS_helper(alpha, Niter, kernel, np.float32(U), np.float32(V), fx, fy, ft)
     total_error = (norm(Unew-U,'fro')+norm(Vnew-V,'fro'))/(im1.shape[0]*im1.shape[1])
-    
+
     U = Unew
     V = Vnew
 
@@ -111,7 +112,7 @@ def computeDerivatives(im1, im2):
     kernelY = np.array([[-1,-1],
                         [ 1, 1]], dtype='float32') * .25 #kernel for computing d/dy
 
-    
+
     kernelT = np.ones((2,2), dtype='float32')*.25
 
     #Ex in the paper (in the centre of 2x2 cube)
