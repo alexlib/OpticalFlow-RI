@@ -7,3 +7,4 @@ farneback_numba_test_results/*
 farneback_validation_results/*
 farneback_test_results/*
 tests/__pycache__/*
+farneback_liushen_optimization/*
