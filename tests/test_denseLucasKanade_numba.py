@@ -1,5 +1,5 @@
 """
-Test file for the optimized denseLucasKanade_Numba implementation.
+Test file for the optimized denseLucasKanade_numba implementation.
 """
 
 import os
@@ -12,12 +12,12 @@ from skimage.io import imread
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
 # Import the implementation to test
-from denseLucasKanade_Numba_optimized import denseLucasKanade_Numba, _bilinear_interpolate
+from denseLucasKanade_numba import denseLucasKanade_numba, _bilinear_interpolate
 from GenericPyramidalOpticalFlow import genericPyramidalOpticalFlow
 
-def test_denseLucasKanade_Numba_initialization():
-    """Test that the denseLucasKanade_Numba class can be initialized."""
-    lk = denseLucasKanade_Numba(Niter=5, halfWindow=13)
+def test_denseLucasKanade_numba_initialization():
+    """Test that the denseLucasKanade_numba class can be initialized."""
+    lk = denseLucasKanade_numba(Niter=5, halfWindow=13)
     assert lk is not None
     assert lk.Niter == 5
     assert lk.windowHalfWidth == 13
@@ -25,8 +25,8 @@ def test_denseLucasKanade_Numba_initialization():
     assert lk.windowWidth == 27
     assert lk.windowHeight == 27
 
-def test_denseLucasKanade_Numba_compute_small():
-    """Test that the denseLucasKanade_Numba class can compute optical flow on a small image."""
+def test_denseLucasKanade_numba_compute_small():
+    """Test that the denseLucasKanade_numba class can compute optical flow on a small image."""
     # Create a small test image with a simple pattern
     im1 = np.zeros((32, 32), dtype=np.float32)
     im2 = np.zeros((32, 32), dtype=np.float32)
@@ -42,7 +42,7 @@ def test_denseLucasKanade_Numba_compute_small():
     V = np.zeros_like(im1)
     
     # Create the Lucas-Kanade object
-    lk = denseLucasKanade_Numba(Niter=5, halfWindow=5)
+    lk = denseLucasKanade_numba(Niter=5, halfWindow=5)
     
     # Compute optical flow
     U_out, V_out, _ = lk.compute(im1, im2, U, V)
@@ -52,8 +52,8 @@ def test_denseLucasKanade_Numba_compute_small():
     assert np.mean(U_out[13:20, 12:20]) > 0.5  # x-component should be positive
     assert np.mean(V_out[13:20, 12:20]) > 0.5  # y-component should be positive
 
-def test_denseLucasKanade_Numba_with_GenericPyramidalOpticalFlow():
-    """Test that the denseLucasKanade_Numba class works with GenericPyramidalOpticalFlow."""
+def test_denseLucasKanade_numba_with_GenericPyramidalOpticalFlow():
+    """Test that the denseLucasKanade_numba class works with GenericPyramidalOpticalFlow."""
     # Create a small test image with a simple pattern (64x64 instead of 256x256)
     im1 = np.zeros((64, 64), dtype=np.float32)
     im2 = np.zeros((64, 64), dtype=np.float32)
@@ -69,7 +69,7 @@ def test_denseLucasKanade_Numba_with_GenericPyramidalOpticalFlow():
     V = np.zeros_like(im1)
     
     # Create the Lucas-Kanade object with smaller window for faster computation
-    lk = denseLucasKanade_Numba(Niter=3, halfWindow=5)
+    lk = denseLucasKanade_numba(Niter=3, halfWindow=5)
     
     # Parameters for GenericPyramidalOpticalFlow - use minimal settings for test
     FILTER = 2
@@ -124,8 +124,8 @@ def test_bilinear_interpolate():
 
 if __name__ == "__main__":
     # Run the tests
-    test_denseLucasKanade_Numba_initialization()
-    test_denseLucasKanade_Numba_compute_small()
+    test_denseLucasKanade_numba_initialization()
+    test_denseLucasKanade_numba_compute_small()
     test_bilinear_interpolate()
-    test_denseLucasKanade_Numba_with_GenericPyramidalOpticalFlow()
+    test_denseLucasKanade_numba_with_GenericPyramidalOpticalFlow()
     print("All tests passed!")

@@ -1,5 +1,6 @@
 """
-MIT LicenseCopyright (c) [2021-2024] [Luís Mendes, luis <dot> mendes _at_ tecnico.ulisboa.pt]
+MIT License
+Copyright (c) [2021-2024] [Luís Mendes, luis <dot> mendes _at_ tecnico.ulisboa.pt]
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +23,7 @@ SOFTWARE.
 import numpy as np
 from scipy.ndimage import convolve
 from numba import njit, prange
+from tqdm import tqdm
 
 # Standalone Numba-optimized functions
 @njit(fastmath=True)
@@ -55,7 +57,6 @@ def _compute_flow_vector(img1, img2, x, y, window_half_width, window_half_height
     prev_x = x + initial_flow_x
     prev_y = y + initial_flow_y
 
-    # Compute patch matrices directly instead of using a separate function
     # Initialize variables
     A11 = 0.0
     A12 = 0.0
@@ -301,8 +302,24 @@ def _compute_flow_parallel(im1, im2, U_init, V_init, height, width,
     
     return u_out, v_out, status, err
 
-class denseLucasKanade_Numba(object):
+class denseLucasKanade_numba(object):
+    """
+    Dense Lucas-Kanade optical flow implementation with Numba acceleration.
+    
+    This class implements the Lucas-Kanade optical flow algorithm with Numba
+    acceleration for improved performance on CPU.
+    """
+    
     def __init__(self, Niter=5, halfWindow=13, provideGenericPyramidalDefaults=True, enableVorticityEnhancement=False):
+        """
+        Initialize the Dense Lucas-Kanade algorithm.
+        
+        Args:
+            Niter: Number of iterations for each pixel
+            halfWindow: Half size of the window (full window size will be 2*halfWindow+1)
+            provideGenericPyramidalDefaults: Whether to provide default parameters for pyramidal processing
+            enableVorticityEnhancement: Whether to enable vorticity enhancement
+        """
         self.provideGenericPyramidalDefaults = provideGenericPyramidalDefaults
         self.enableVorticityEnhancement = enableVorticityEnhancement
 
@@ -315,6 +332,15 @@ class denseLucasKanade_Numba(object):
         print('Running on CPU with Numba acceleration')
 
     def evaluateVorticityEnhancement(self, U, V):
+        """
+        Evaluate vorticity enhancement parameters based on flow field.
+        
+        Args:
+            U, V: Flow components
+            
+        Returns:
+            List of asymmetric window parameters [left, right, top, bottom]
+        """
         if not self.enableVorticityEnhancement:
             return [0, 0, 0, 0]
 
@@ -364,6 +390,9 @@ class denseLucasKanade_Numba(object):
         # Threshold for convergence
         threshold = 0.01
 
+        # Use tqdm for progress tracking
+        print("Computing optical flow...")
+        
         # Use Numba's parallel processing capabilities
         u_out, v_out, status, err = _compute_flow_parallel(
             im1, im2, U, V, height, width,
@@ -373,16 +402,21 @@ class denseLucasKanade_Numba(object):
             assymetricWndCfg[2], assymetricWndCfg[3],
             calcErr
         )
+        
+        print("Computation complete")
 
         return u_out, v_out, calcErr
 
     def getAlgoName(self):
+        """Return the algorithm name."""
         return 'Numba Dense LK'
 
     def hasGenericPyramidalDefaults(self):
+        """Return whether generic pyramidal defaults are provided."""
         return self.provideGenericPyramidalDefaults
 
     def getGenericPyramidalDefaults(self):
+        """Return generic pyramidal defaults."""
         parameters = {}
         parameters['warping'] = False
         parameters['intermediateScaling'] = True

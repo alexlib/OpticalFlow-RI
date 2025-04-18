@@ -207,7 +207,7 @@ def run_dense_lucas_kanade(im1, im2, window_size=15, iterations=5, pyr_levels=1,
         U, V: Optimized flow components
     """
     # Import Dense Lucas-Kanade implementation
-    from denseLucasKanade_Numba_optimized import denseLucasKanade_Numba
+    from denseLucasKanade_numba import denseLucasKanade_numba
 
     # Create output directory
     method_dir = os.path.join(output_dir, f'dense_lucas_kanade_w{window_size}_i{iterations}_p{pyr_levels}')
@@ -218,7 +218,7 @@ def run_dense_lucas_kanade(im1, im2, window_size=15, iterations=5, pyr_levels=1,
     V = np.zeros_like(im1)
 
     # Create Dense Lucas-Kanade adapter
-    lk = denseLucasKanade_Numba(
+    lk = denseLucasKanade_numba(
         halfWindow=window_size//2,
         Niter=iterations,
         provideGenericPyramidalDefaults=True
