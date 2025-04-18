@@ -28,16 +28,9 @@ import scipy.io
 from GenericPyramidalOpticalFlow import genericPyramidalOpticalFlow
 from PhysicsBasedOpticalFlowLiuShen import LiuShenOpticalFlowAlgoAdapter
 
-# Try to import OpenCL version first, fall back to Numba if it fails
-try:
-    from Farneback_PyCL import Farneback_PyCL
-    use_opencl = True
-    print("Using OpenCL implementation of Farneback")
-except Exception as e:
-    from Farneback_Numba import Farneback_Numba
-    use_opencl = False
-    print(f"OpenCL import failed: {e}")
-    print("Falling back to Numba implementation of Farneback")
+# Use Numba implementation for CPU acceleration
+from Farneback_Numba import Farneback_Numba
+print("Using Numba implementation of Farneback")
 
 def save_flow(U, V, filename):
     margins = { 'top' : 0,
@@ -71,24 +64,14 @@ print(fn1);
 Iold = imread(fn1).astype(np.float32)
 Inew = imread(fn2).astype(np.float32)
 
-# Create the appropriate Farneback adapter based on availability
-if use_opencl:
-    fbAdapter = Farneback_PyCL(
-        windowSize=33,
-        Niters=5,
-        polyN=7,
-        polySigma=1.5,
-        platformID=0,
-        deviceID=0
-    )
-else:
-    fbAdapter = Farneback_Numba(
-        windowSize=33,
-        Niters=5,
-        polyN=7,
-        polySigma=1.5,
-        pyramidalLevels=3
-    )
+# Create the Farneback adapter
+fbAdapter = Farneback_Numba(
+    windowSize=33,
+    Niters=5,
+    polyN=7,
+    polySigma=1.5,
+    pyramidalLevels=3
+)
 
 if useLiuShenOF:
     lsAdapter = LiuShenOpticalFlowAlgoAdapter(0.1)  # Using 0.1 for alpha parameter

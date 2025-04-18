@@ -18,7 +18,7 @@ from skimage.io import imread
 
 # Import algorithm implementations
 from GenericPyramidalOpticalFlow import genericPyramidalOpticalFlow
-from denseLucasKanade_Numba_fixed import denseLucasKanade_Numba
+from denseLucasKanade_Numba_optimized import denseLucasKanade_Numba
 from Farneback_Numba import Farneback_Numba
 from HornSchunck import HSOpticalFlowAlgoAdapter
 from PhysicsBasedOpticalFlowLiuShen import LiuShenOpticalFlowAlgoAdapter

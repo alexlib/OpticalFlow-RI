@@ -11,11 +11,11 @@ The library includes concrete examples on how to run the algorithms along with t
 
 Current reference implementations include:
 - Horn-Schunck (Python, Numba)
-- Lucas-Kanade (Python, OpenCL, Numba)
-- Farnebäck (Python, OpenCL, Numba)
+- Lucas-Kanade (Python, Numba)
+- Farnebäck (Python, Numba)
 - Liu-Shen Physics based optimizer (Python, Numba)
 
-The Numba implementations provide CPU acceleration without requiring OpenCL, making them more portable and easier to use.
+All implementations use Numba for CPU acceleration, making them portable and easy to use without requiring specialized hardware.
 
 
 **Open-Source licensed**
@@ -31,15 +31,15 @@ Implementations tested with Ubuntu 20.04.2LTS and Ubuntu 21.04
 
 Required packages include:
 ```bash
-apt install python3 python3-numpy python3-skimage python3-pyopencl python3-numba
+apt install python3 python3-numpy python3-skimage python3-numba
 ```
 
 Or using pip:
 ```bash
-pip install numpy scikit-image pyopencl numba matplotlib scipy pytest tqdm
+pip install numpy scikit-image numba matplotlib scipy pytest tqdm
 ```
 
-*Note:* A valid OpenCL device is required to run the OpenCL versions of dense Lucas-Kanade and Farnebäck algorithms. However, the Numba-accelerated versions can run on any CPU without requiring OpenCL.
+All implementations use Numba for CPU acceleration and can run on any CPU without requiring specialized hardware.
 
 ## Running the examples
 There are a number of examples in the examples folder, namely:

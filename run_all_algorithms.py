@@ -14,24 +14,9 @@ matplotlib.use('TkAgg')
 from scipy.io import loadmat
 from tqdm import tqdm
 
-# Check if PyOpenCL is installed and available
-try:
-    import pyopencl
-    # Try to get platforms to check if OpenCL is actually available
-    try:
-        platforms = pyopencl.get_platforms()
-        if len(platforms) > 0:
-            has_opencl = True
-            print("PyOpenCL is installed and OpenCL platforms are available.")
-        else:
-            has_opencl = False
-            print("PyOpenCL is installed but no OpenCL platforms were found.")
-    except Exception as e:
-        has_opencl = False
-        print(f"PyOpenCL error: {e}. Will use Numba implementations only.")
-except ImportError:
-    has_opencl = False
-    print("PyOpenCL is not installed. Will use Numba implementations only.")
+# All implementations use Numba for CPU acceleration
+has_opencl = False  # Always use Numba implementations
+print("Using Numba implementations for all algorithms.")
 
 def extract_parabolic_profile(U, V, axis='horizontal', position=None):
     """
@@ -138,23 +123,8 @@ def run_algorithm(script_name, algorithm_name):
     print(f"Running {algorithm_name}...")
     print(f"{'='*80}")
 
-    # If OpenCL is not available, modify the script to use Numba
-    if not has_opencl and ('_PyCL' in script_name or 'Farneback' in script_name or 'denseLK' in script_name):
-        print(f"OpenCL is not available. Modifying {script_name} to use Numba implementation...")
-
-        # Create a modified version of the script that forces Numba
-        numba_script = script_name.replace('.py', '_numba.py')
-        with open(script_name, 'r') as f:
-            content = f.read()
-
-        # Force use_opencl to False
-        content = content.replace('use_opencl = True', 'use_opencl = False')
-
-        with open(numba_script, 'w') as f:
-            f.write(content)
-
-        # Use the modified script
-        script_name = numba_script
+    # All implementations use Numba for CPU acceleration
+    # No need to modify scripts
 
     # Run the algorithm
     start_time = time.time()
@@ -298,11 +268,11 @@ def compare_all_algorithms(results):
 def main():
     # Define algorithms to run
     algorithms = [
-        # ("denseLK_Fs2_0_PyrLvls2.py", "DenseLucasKanade"),
+        ("denseLK_Fs2_0_PyrLvls2.py", "DenseLucasKanade"),
         ("denseLK_Fs2_0_PyrLvls2_LiuShen.py", "DenseLucasKanade_LiuShen"),
-        # ("Farneback_Fs2_0_PyrLvls2.py", "Farneback"),
+        ("Farneback_Fs2_0_PyrLvls2.py", "Farneback"),
         ("Farneback_Fs2_0_PyrLvls2_LiuShen.py", "Farneback_LiuShen"),
-        # ("HornSchunck_Fs2_0_PyrLvls2.py", "HornSchunck"),
+        ("HornSchunck_Fs2_0_PyrLvls2.py", "HornSchunck"),
         ("HornSchunck_Fs2_0_PyrLvls2_LiuShen.py", "HornSchunck_LiuShen")
     ]
 

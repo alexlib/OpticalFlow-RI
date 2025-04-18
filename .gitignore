@@ -6,3 +6,4 @@ farneback_numba_liushen_17apr_results/*
 farneback_numba_test_results/*
 farneback_validation_results/*
 farneback_test_results/*
+tests/__pycache__/*

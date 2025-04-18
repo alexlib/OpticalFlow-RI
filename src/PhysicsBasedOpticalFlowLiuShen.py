@@ -25,10 +25,7 @@ SOFTWARE.
 
 from numba import jit
 import numpy as np
-from scipy.linalg import norm
-from scipy.ndimage.filters import convolve as filter2
-#from scipy.signal import correlate2d as filter2
-from scipy import signal
+from scipy.ndimage import convolve as filter2
 
 class LiuShenOpticalFlowAlgoAdapter(object):
     def __init__(self, alpha):
@@ -54,7 +51,8 @@ def generate_invmatrix(im, h, dx):
     D2=np.flipud(np.fliplr(D2));
     H=np.flipud(np.fliplr(H));
 
-    r,c=im.shape;
+    # Get image dimensions (not used directly but needed for context)
+    _ = im.shape
 
     h = np.float32(h)
 

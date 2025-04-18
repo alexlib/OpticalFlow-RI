@@ -10,14 +10,11 @@ examples:
 """
 
 from __future__ import division
-from numba import jit,njit,prange,objmode
+from numba import jit
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.ndimage import gaussian_filter
 from scipy.ndimage import convolve as filter2
-import scipy.signal as sgn
 from scipy.linalg import norm
-from scipy import signal
 # Commented out for benchmark
 #from IPython.core import debugger
 #debug = debugger.Pdb().set_trace
@@ -49,7 +46,7 @@ class HSOpticalFlowAlgoAdapter(object):
         parameters['scaling'] = True
         return parameters
 
-@jit('Tuple((float32[:,:],float32[:,:]))(float32,float32[:,:],float32[:,:],float32[:,:],float32[:,:],float32[:,:])', nopython=True, parallel=False)
+@jit('Tuple((float32[:,:],float32[:,:]))(float32,float32[:,:],float32[:,:],float32[:,:],float32[:,:],float32[:,:])', parallel=False)
 def HS_helper2(alpha, fx, fy, ft, uAvg, vAvg):
     #%% common part of update step
     der = (fx*uAvg + fy*vAvg + ft) / (alpha**2 + fx**2 + fy**2)
@@ -91,10 +88,9 @@ def HS(im2, im1, alpha, Niter, U, V):
     if (np.size(fx,0) > 100 and np.size(fx,1) > 100):
         print(fx[100,100],fy[100,100],ft[100,100])
 
-    total_error=100000000;
+    # Initialize error
+    total_error = 0.0
     # Iteration to reduce error
-    Unew = None
-    VNew = None
 
     Unew, Vnew = HS_helper(alpha, Niter, kernel, np.float32(U), np.float32(V), fx, fy, ft)
     total_error = (norm(Unew-U,'fro')+norm(Vnew-V,'fro'))/(im1.shape[0]*im1.shape[1])
@@ -141,7 +137,9 @@ def compareGraphs(u,v,Inew,scale=3):
 
     plt.draw(); plt.pause(0.01)
 
-def demo(stem):
+def demo(_):
+    """Demo function (unused)"""
+    # Parameter is unused
     #flist,ext = getimgfiles(stem)
     #
     #for i in range(len(flist)-1):

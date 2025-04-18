@@ -28,16 +28,9 @@ import scipy.io
 from GenericPyramidalOpticalFlow import genericPyramidalOpticalFlow
 from PhysicsBasedOpticalFlowLiuShen import LiuShenOpticalFlowAlgoAdapter
 
-# Try to import OpenCL version first, fall back to Numba if it fails
-try:
-    from denseLucasKanade_PyCL import denseLucasKanade_PyCl
-    use_opencl = True
-    print("Using OpenCL implementation of Dense Lucas-Kanade")
-except Exception as e:
-    from denseLucasKanade_Numba import denseLucasKanade_Numba
-    use_opencl = False
-    print(f"OpenCL import failed: {e}")
-    print("Falling back to Numba implementation of Dense Lucas-Kanade")
+# Use Numba implementation for CPU acceleration
+from denseLucasKanade_Numba_optimized import denseLucasKanade_Numba
+print("Using Numba implementation of Dense Lucas-Kanade")
 
 def save_flow(U, V, filename):
     margins = { 'top' : 0,
@@ -75,11 +68,8 @@ print(fn1);
 Iold = imread(fn1).astype(np.float32)
 Inew = imread(fn2).astype(np.float32)
 
-# Create the appropriate Lucas-Kanade adapter based on availability
-if use_opencl:
-    lkAdapter = denseLucasKanade_PyCl(Niter=5, halfWindow=13, platformID=0) #Python OpenCL direct implementation
-else:
-    lkAdapter = denseLucasKanade_Numba(Niter=5, halfWindow=13, provideGenericPyramidalDefaults=True) #Numba CPU implementation
+# Create the Lucas-Kanade adapter
+lkAdapter = denseLucasKanade_Numba(Niter=5, halfWindow=13, provideGenericPyramidalDefaults=True) #Numba CPU implementation
 if useLiuShenOF:
     lsAdapter = LiuShenOpticalFlowAlgoAdapter(10)
 else:
