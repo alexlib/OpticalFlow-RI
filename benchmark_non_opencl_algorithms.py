@@ -21,9 +21,12 @@ import time
 from scipy.ndimage import gaussian_filter
 import scipy.io
 from tqdm import tqdm
+
+# Configure tqdm to work in all environments
+tqdm.monitor_interval = 0  # Workaround for occasional freezing
 import logging
 
-# Configure logging
+# Configure logging - force immediate output
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -31,6 +34,11 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout)
     ]
 )
+
+# Force immediate output
+sys.stdout.flush()
+print("BENCHMARK STARTING - DIRECT PRINT")
+sys.stdout.flush()
 
 # Import algorithms
 from Farneback_Numba import Farneback_Numba
@@ -45,18 +53,29 @@ def load_bits08_images():
     img2_path = "examples/testImages/Bits08/Ni06/parabolic01_1.tif"
 
     print(f"Loading images: {img1_path} and {img2_path}")
+    sys.stdout.flush()
+
+    print("Loading first image...")
+    sys.stdout.flush()
     with tqdm(total=100, desc="Loading first image", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
         img1 = imread(img1_path).astype(np.float32)
         pbar.update(100)
+    print("First image loaded.")
+    sys.stdout.flush()
 
+    print("Loading second image...")
+    sys.stdout.flush()
     with tqdm(total=100, desc="Loading second image", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
         img2 = imread(img2_path).astype(np.float32)
         pbar.update(100)
+    print("Second image loaded.")
+    sys.stdout.flush()
 
     # Print image information
     print(f"Image shape: {img1.shape}")
     print(f"Image dtype: {img1.dtype}")
     print(f"Image min/max values: {img1.min()}/{img1.max()}")
+    sys.stdout.flush()
 
     # Normalize images if needed (16-bit to 8-bit range)
     if img1.max() > 255:
@@ -539,6 +558,13 @@ def main():
     output_dir = 'benchmark_results_bits08'
     os.makedirs(output_dir, exist_ok=True)
 
+    # Direct print statements
+    print("\n=== Starting Benchmark of Non-OpenCL Algorithms on Bits08 Test Case ===")
+    print("This benchmark will run multiple optical flow algorithms and compare their results.")
+    print("Progress bars will show the status of each step.\n")
+    sys.stdout.flush()
+
+    # Also log the same information
     logging.info("\n=== Starting Benchmark of Non-OpenCL Algorithms on Bits08 Test Case ===")
     logging.info("This benchmark will run multiple optical flow algorithms and compare their results.")
     logging.info("Progress bars will show the status of each step.\n")
