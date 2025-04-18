@@ -26,8 +26,15 @@ from __future__ import absolute_import, print_function
 import os
 import numpy as np
 from scipy.ndimage.filters import convolve as filter2
-import pyopencl as cl
-import pyopencl.array as cl_array
+try:
+    import pyopencl as cl
+    import pyopencl.array as cl_array
+    use_opencl = True
+except ImportError:
+    use_opencl = False
+    import numba
+# import pyopencl as cl
+
 import copy
 
 class denseLucasKanade_PyCl(object):
