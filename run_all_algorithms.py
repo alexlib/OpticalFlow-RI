@@ -1,22 +1,20 @@
 #!/usr/bin/env python
 """
-Run all optical flow algorithms one by one and show results as they come in.
+Run all available optical flow algorithms using the unified flow analysis script.
+
+This script runs all the available optical flow algorithms using the unified
+flow analysis script with the specified parameters.
 """
 
-import sys
 import os
+import sys
 import subprocess
+import argparse
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('TkAgg')
 from scipy.io import loadmat
 from tqdm import tqdm
-
-# All implementations use Numba for CPU acceleration
-has_opencl = False  # Always use Numba implementations
-print("Using Numba implementations for all algorithms.")
 
 def extract_parabolic_profile(U, V, axis='horizontal', position=None):
     """
