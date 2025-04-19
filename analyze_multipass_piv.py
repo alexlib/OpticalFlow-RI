@@ -60,10 +60,8 @@ def analyze_with_multipass_piv(frame_a, frame_b, dt=1.0):
         search_area_size=search_area_size,
         sig2noise_method='peak2peak'
     )
-
-    # Skip validation for now
-    # Just filter outliers
-    u1, v1 = filters.replace_outliers(u1, v1, method='localmean', max_iter=3, kernel_size=3)
+    flags1 = np.zeros_like(u1, dtype=bool)
+    u1, v1 = filters.replace_outliers(u1, v1, flags1, method='localmean', max_iter=3, kernel_size=3)
 
     # Second pass with 32x32 windows
     window_size = 32
@@ -79,9 +77,8 @@ def analyze_with_multipass_piv(frame_a, frame_b, dt=1.0):
         search_area_size=search_area_size,
         sig2noise_method='peak2peak'
     )
-
-    # Filter outliers
-    u2, v2 = filters.replace_outliers(u2, v2, method='localmean', max_iter=3, kernel_size=3)
+    flags2 = np.zeros_like(u2, dtype=bool)
+    u2, v2 = filters.replace_outliers(u2, v2, flags2, method='localmean', max_iter=3, kernel_size=3)
 
     # Third pass with 16x16 windows
     window_size = 16
@@ -97,9 +94,8 @@ def analyze_with_multipass_piv(frame_a, frame_b, dt=1.0):
         search_area_size=search_area_size,
         sig2noise_method='peak2peak'
     )
-
-    # Filter outliers
-    u3, v3 = filters.replace_outliers(u3, v3, method='localmean', max_iter=3, kernel_size=3)
+    flags3 = np.zeros_like(u3, dtype=bool)
+    u3, v3 = filters.replace_outliers(u3, v3, flags3, method='localmean', max_iter=3, kernel_size=3)
 
     # Final pass with 8x8 windows
     window_size = 8
@@ -115,9 +111,8 @@ def analyze_with_multipass_piv(frame_a, frame_b, dt=1.0):
         search_area_size=search_area_size,
         sig2noise_method='peak2peak'
     )
-
-    # Filter outliers
-    u4, v4 = filters.replace_outliers(u4, v4, method='localmean', max_iter=3, kernel_size=3)
+    flags4 = np.zeros_like(u4, dtype=bool)
+    u4, v4 = filters.replace_outliers(u4, v4, flags4, method='localmean', max_iter=3, kernel_size=3)
 
     # Use the final pass results
     u, v = u4, v4
