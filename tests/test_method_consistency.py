@@ -81,6 +81,10 @@ def main():
     U_fb, V_fb, _ = fb.compute(img1, img2, U_fb, V_fb)
     u_fb_interp = griddata((np.indices(U_fb.shape)[0].flatten(), np.indices(U_fb.shape)[1].flatten()), U_fb.flatten(), points_grid, method='linear', fill_value=0).reshape(u_piv.shape)
     v_fb_interp = griddata((np.indices(V_fb.shape)[0].flatten(), np.indices(V_fb.shape)[1].flatten()), V_fb.flatten(), points_grid, method='linear', fill_value=0).reshape(u_piv.shape)
+    # Postprocess and compare to OpenPIV
+    u_fb_post, v_fb_post = postprocess_flow(u_fb_interp, v_fb_interp)
+    u_piv_post, v_piv_post = postprocess_flow(u_piv, v_piv)
+    compare_flows(u_fb_post, v_fb_post, u_piv_post, v_piv_post, 'Farneback', 'OpenPIV')
 
     # Lucas-Kanade (large window, pyramidal)
     lk = denseLucasKanade_numba(Niter=5, halfWindow=16, provideGenericPyramidalDefaults=True)
@@ -89,6 +93,9 @@ def main():
     U_lk, V_lk, _ = lk.compute(img1, img2, U_lk, V_lk)
     u_lk_interp = griddata((np.indices(U_lk.shape)[0].flatten(), np.indices(U_lk.shape)[1].flatten()), U_lk.flatten(), points_grid, method='linear', fill_value=0).reshape(u_piv.shape)
     v_lk_interp = griddata((np.indices(V_lk.shape)[0].flatten(), np.indices(V_lk.shape)[1].flatten()), V_lk.flatten(), points_grid, method='linear', fill_value=0).reshape(u_piv.shape)
+    # Postprocess and compare to OpenPIV
+    u_lk_post, v_lk_post = postprocess_flow(u_lk_interp, v_lk_interp)
+    compare_flows(u_lk_post, v_lk_post, u_piv_post, v_piv_post, 'Lucas-Kanade', 'OpenPIV')
 
     # Horn-Schunck (pyramidal)
     hs_adapter = HSOpticalFlowAlgoAdapter(alphas=[0.1], Niter=100, provideGenericPyramidalDefaults=True)
@@ -97,6 +104,9 @@ def main():
     U_hs, V_hs, _ = hs_adapter.compute(img1, img2, U_hs, V_hs)
     u_hs_interp = griddata((np.indices(U_hs.shape)[0].flatten(), np.indices(U_hs.shape)[1].flatten()), U_hs.flatten(), points_grid, method='linear', fill_value=0).reshape(u_piv.shape)
     v_hs_interp = griddata((np.indices(V_hs.shape)[0].flatten(), np.indices(V_hs.shape)[1].flatten()), V_hs.flatten(), points_grid, method='linear', fill_value=0).reshape(u_piv.shape)
+    # Postprocess and compare to OpenPIV
+    u_hs_post, v_hs_post = postprocess_flow(u_hs_interp, v_hs_interp)
+    compare_flows(u_hs_post, v_hs_post, u_piv_post, v_piv_post, 'Horn-Schunck', 'OpenPIV')
 
     # Plot all results on the 16x16 grid
     def show_quiver_on_grid(x, y, u, v, title, scale=0.5):

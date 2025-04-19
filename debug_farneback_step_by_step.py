@@ -19,7 +19,11 @@ from tqdm import tqdm
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 
 # Import the Farneback implementation
-from Farneback_Numba_optimized import Farneback_Numba
+try:
+    from Farneback_numba import Farneback_Numba
+except ImportError:
+    print("Error: Farneback_Numba module not found. Ensure it exists in the 'src' directory.")
+    sys.exit(1)
 
 def load_parabolic_images():
     """Load the parabolic test images from the Bits08 dataset."""
@@ -448,6 +452,8 @@ def debug_farneback_algorithm(im1, im2, window_size, iterations=5, poly_n=5, pol
             scale *= fb.pyrScale
 
         U, V = debug_farneback_level(fb, im1, im2, U, V, k, scale, output_dir)
+        # Stop after the first (level 0) pyramid level
+        break
 
     # Visualize final flow
     visualize_flow(U, V, f"Final Flow (window={window_size})",
